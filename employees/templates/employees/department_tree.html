@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Department Tree</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    ul, #myUL {
+      list-style-type: none;
+    }
+
+    .caret {
+      cursor: pointer;
+      user-select: none; /* Prevent text selection */
+    }
+
+    .caret::before {
+      content: "\25B6";
+      color: black;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .caret-down::before {
+      transform: rotate(90deg);
+    }
+
+    .nested {
+      display: none;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .hidden-row {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var toggler = document.getElementsByClassName("caret");
+    for (var i = 0; i < toggler.length; i++) {
+      toggler[i].addEventListener("click", function() {
+        this.parentElement.querySelector(".nested").classList.toggle("active");
+        this.classList.toggle("caret-down");
+      });
+    }
+  });
+</script>
+
+
+{# ** #}
+
+
+{# выпадающий список для отделов #}
+<div class="container">
+  <h1>Department Tree</h1>
+
+  <!-- ** -->
+
+  <div class="row">
+    <button id="showMoreBtn" class="btn btn-primary">Maximize</button>
+    <div class="col-auto">
+      <input type="number" id="numInput" class="form-control" style="max-width: 100px;" placeholder="rows">
+    </div>
+  </div>
+
+  <!-- ** -->
+
+  <ul id="myUL">
+    {% for department in departments %}
+      {% if not department.parent_id %}
+        <li>
+          <span class="caret">{{ department.name }}</span>
+          <ul class="nested">
+            {% include 'employees/department_subtree.html' with department=department %}
+          </ul>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+
+{# ** #}
+
+
+<!--
+TODO: оставим для примера, как было изначально, и как сделал потом ниже
+данный код НЕ где НЕ используется
+-->
+{# отображение всех записей и обратно только 10 #}
+{#<script>#}
+{#  document.addEventListener('DOMContentLoaded', function () {#}
+{#    const showMoreBtn = document.getElementById('showMoreBtn');#}
+{#    const hiddenRows = document.querySelectorAll('.hidden-row');#}
+{#    let isExpanded = false;#}
+{##}
+{#    showMoreBtn.addEventListener('click', function () {#}
+{#      if (isExpanded) {#}
+{#        hiddenRows.forEach(row => row.style.display = 'none');#}
+{#        showMoreBtn.textContent = 'Maximize';#}
+{#      } else {#}
+{#        hiddenRows.forEach(row => row.style.display = 'table-row');#}
+{#        showMoreBtn.textContent = 'Minimize';#}
+{#      }#}
+{#      isExpanded = !isExpanded;#}
+{#    });#}
+{#  });#}
+{#</script>#}
+
+{# ограничение вывода, только по 10 #}
+{#<script>#}
+{#  document.addEventListener('DOMContentLoaded', function () {#}
+{#    const numRowsToShow = 10; // Количество строк, которые нужно показать по умолчанию#}
+{#    const rows = document.querySelectorAll('.employee-row');#}
+{##}
+{#    let currentDeptRows = [];#}
+{#    let lastDept = null;#}
+{##}
+{#    rows.forEach((row, index) => {#}
+{#      // Получаем идентификатор департамента из строки, если используется#}
+{#      const currentDept = row.dataset.departmentId || '';#}
+{##}
+{#      if (currentDept !== lastDept) {#}
+{#        // Если встретили новый департамент, скрываем лишние строки из предыдущего департамента#}
+{#        if (currentDeptRows.length > numRowsToShow) {#}
+{#          currentDeptRows.forEach((r, i) => {#}
+{#            if (i >= numRowsToShow) {#}
+{#              r.classList.add('hidden-row');#}
+{#            }#}
+{#          });#}
+{#        }#}
+{##}
+{#        // Начинаем собирать строки для нового департамента#}
+{#        currentDeptRows = [];#}
+{#        lastDept = currentDept;#}
+{#      }#}
+{##}
+{#      // Добавляем строку в текущий список строк департамента#}
+{#      currentDeptRows.push(row);#}
+{#    });#}
+{##}
+{#    // Обрабатываем последние строки для последнего департамента#}
+{#    if (currentDeptRows.length > numRowsToShow) {#}
+{#      currentDeptRows.forEach((r, i) => {#}
+{#        if (i >= numRowsToShow) {#}
+{#          r.classList.add('hidden-row');#}
+{#        }#}
+{#      });#}
+{#    }#}
+{#  });#}
+{#</script>#}
+
+
+<script>
+  /**
+   * Описание ф-ционала:
+   * отображение всех записей и обратно только 10
+   * ограничение вывода, только по 10
+   * изменение состояния кнопки и сброс кол-ва выводимых записей до 10
+   */
+  class EmployeeTableManager {
+    constructor(showMoreBtnId, numInputId) {
+      this.showMoreBtn = document.getElementById(showMoreBtnId);
+      this.numInput = document.getElementById(numInputId);
+      this.numRowsToShow = 10; // Начальное количество строк для показа
+      this.isDefault = true; // Флаг для определения состояния кнопки
+
+      this.initialize();
+    }
+
+    // Инициализация события для кнопки и обновление видимости строк при загрузке страницы
+    initialize() {
+      this.showMoreBtn.addEventListener('click', () => this.toggleRowsVisibility());
+      this.updateRowsVisibility();
+    }
+
+    // Обновление видимости строк
+    updateRowsVisibility() {
+      const rows = document.querySelectorAll('.employee-row');
+      let currentDeptRows = [];
+      let lastDept = null;
+
+      rows.forEach((row) => {
+        const currentDept = row.dataset.departmentId || '';
+
+        if (currentDept !== lastDept) {
+          this.applyVisibility(currentDeptRows);
+          currentDeptRows = [];
+          lastDept = currentDept;
+        }
+
+        currentDeptRows.push(row);
+      });
+
+      this.applyVisibility(currentDeptRows);
+    }
+
+    // Применение видимости к строкам в зависимости от `numRowsToShow`
+    applyVisibility(rows) {
+      if (rows.length > this.numRowsToShow) {
+        rows.forEach((r, i) => {
+          if (i >= this.numRowsToShow) {
+            r.classList.add('hidden-row');
+          } else {
+            r.classList.remove('hidden-row');
+          }
+        });
+      } else {
+        rows.forEach(r => r.classList.remove('hidden-row'));
+      }
+    }
+
+    // Переключение состояния кнопки и обновление видимости строк
+    toggleRowsVisibility() {
+      if (this.isDefault) {
+        this.setCustomRowsToShow();
+      } else {
+        this.resetToDefault();
+      }
+
+      this.updateRowsVisibility();
+      this.isDefault = !this.isDefault;
+    }
+
+    // Установка пользовательского количества строк для отображения
+    setCustomRowsToShow() {
+      const inputValue = parseInt(this.numInput.value, 10);
+
+      if (!isNaN(inputValue) && inputValue > 0) {
+        this.numRowsToShow = inputValue;
+      } else {
+        this.numRowsToShow = 10; // Восстановление значения по умолчанию, если ввод некорректен
+      }
+
+      this.showMoreBtn.textContent = 'Default';
+    }
+
+    // Сброс к состоянию по умолчанию
+    resetToDefault() {
+      this.numRowsToShow = 10;
+      this.showMoreBtn.textContent = 'Maximize';
+      this.numInput.value = 10;
+    }
+  }
+
+  // Инициализация скрипта при загрузке страницы
+  document.addEventListener('DOMContentLoaded', function () {
+    new EmployeeTableManager('showMoreBtn', 'numInput');
+  });
+</script>
+
+</body>
+</html>
