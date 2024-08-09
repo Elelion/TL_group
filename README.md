@@ -40,16 +40,22 @@ requirements.txt
 <br>
 `source env/bin/activate` или `env\Scripts\activate`
 
-4. Установите зависимости:
+4. Создать в корне файл `.env` с содержимым ниже <br>
+`SECRET_KEY = "django-insecure-o8n!jk=o-zty3dqwvh7fqo!v3!8#a=mv8wt1+dy0&s&nobtp6l"`
+<br>
+тк проект тестовый, мы указываем смело наш ключ
+
+5. Установите зависимости:
 `pip install -r requirements.txt`
 
-5. Примените миграции:
+6. Примените миграции:
 `python manage.py migrate`
 
-6. Заполните базу данных:
+7. Заполните базу данных:
 <br>
 Для заполнения базы данных используется скрипт populate_db.py:
 `python populate_db.py`
+
 
 ---
 
